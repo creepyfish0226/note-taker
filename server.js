@@ -3,7 +3,7 @@ var express = require("express");
 var path =  require("path")
 var fs = require("fs")
 var app = express();
-var PORT = 3000;
+var PORT = process.env.PORT||3000;
 var db = require("./db/db.json")
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
@@ -11,10 +11,11 @@ app.use(express.json());
 
 app.use(express.static('public'))
 
-function writeDb (){
+function writeDb (res){
   fs.writeFile("./db/db.json", JSON.stringify(db), (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
+    res.sendStatus(200)
   });
 }
 
@@ -35,9 +36,18 @@ app.post('/api/notes', function (req, res){
     req.body.id = 1
   }
   db.push(req.body)
-  writeDb()
+  writeDb(res)
+})
+
+app.delete('/api/notes/:id', function (req, res){
+  var id = req.params.id
+  for (var i=0; i < db.length; i++){
+    if (db[i].id === parseInt(id)){
+      db.splice(i,1)
+    }
+  }
   console.log(db)
-  res.sendStatus(200)
+  writeDb(res)
 })
 
 app.get('*', function (req, res) {
